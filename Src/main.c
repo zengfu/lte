@@ -168,7 +168,7 @@ int main(void)
   eventhandleHandle = osThreadCreate(osThread(eventhandle), NULL);
 
   /* definition and creation of lte */
-  osThreadDef(lte, Lte_task, osPriorityHigh, 0, 512);
+  osThreadDef(lte, Lte_task, osPriorityHigh, 0, 310);
   lteHandle = osThreadCreate(osThread(lte), NULL);
 
   /* definition and creation of s2lhandle */
