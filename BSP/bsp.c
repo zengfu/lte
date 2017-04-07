@@ -1,16 +1,23 @@
 #include "bsp.h"
 #include "lis3dx.h"
+#include "s2l.h"
 
 extern TIM_HandleTypeDef htim6;
 static void LteInit();
 
 void BspInit()
 {
+  memset(&car,0,sizeof(car));
+ 
   LteInit();
   //TimeStart();
   //on
   //HAL_GPIO_WritePin(ON_OFF_PORT,ON_OFF,GPIO_PIN_RESET);
   HAL_GPIO_WritePin(IR_EN2_PORT,IR_EN2,GPIO_PIN_SET);
+  car.engine=1;
+  car.gps=1;
+  car.mw=1;
+  car.plan=1;
 }
 
 static void (*TimeCallback)();

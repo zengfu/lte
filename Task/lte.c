@@ -7,7 +7,7 @@
 #include "socket.h"
 #include "event.h"
 #include "fhex.h"
-
+#include "s2l.h"
 
 
 extern uint8_t* LoginHead;
@@ -19,43 +19,22 @@ FrameTypeDef GlobalFrame[3];//max=3
 static uint8_t RX_BUF[BUF_SIZE];
 extern osMessageQId EventQHandle;
 
-static uint8_t SCMWakeup(uint8_t status)
+uint8_t SCMWakeup()
 {
-  uint8_t err;
-  cJSON *root;
+ 
   FrameTypeDef frame;
-  
-  root=cJSON_CreateObject();
-  cJSON_AddNumberToObject(root, "res",RES_STATE_OK);
-  cJSON_AddNumberToObject(root, "status",(double)status);
-  char* out=cJSON_PrintUnformatted(root);
-  cJSON_Delete(root);
-  frame.data=b64_encode(out);
-  vPortFree(out);
   frame.cmd=SCM360_NOTIFY_AWAKEN_ACK;
-  frame.size=4+strlen(frame.data);
+  frame.size=4;
   
   uint8_t tmp[4];
   tmp[0]=((uint8_t*)&frame)[1];
   tmp[1]=((uint8_t*)&frame)[0];
   tmp[2]=((uint8_t*)&frame)[3];
   tmp[3]=((uint8_t*)&frame)[2];
-  if((err=SocketWriteBin(tmp,4)!=0))
+  if(SocketWriteBin(tmp,4))
   {
-     vPortFree(frame.data);
      return 1;
   }
-  if((err=SocketWrite(frame.data))!=0)
-  {
-#ifdef S2L_DEBUG
-    S2L_LOG(frame.data);
-#else
-    printf("%s\n",frame.data);
-#endif
-    vPortFree(frame.data);
-    return 1;
-  }
-  vPortFree(frame.data);
   return 0;
 }
 uint8_t const token[]={0x0A,0x74,0xFE,0x3E,0x63,0x26,0xE5,\
@@ -360,7 +339,7 @@ uint8_t CheckFrame()
 #define LTE_UART hlpuart1
 
 extern UART_HandleTypeDef hlpuart1;
-
+extern RTC_HandleTypeDef hrtc;
 void LteTask()
 {
   //LteRestart();
@@ -372,6 +351,7 @@ void LteTask()
   {
     //wait the module init    
     //LteReset();
+    
     if(CheckAT())
     {
       //HAL_UART_Init(&hlpuart1);
@@ -379,7 +359,13 @@ void LteTask()
       lte.status=0;
     }
     else
-      lte.status|=LTE_INIT_MASK;    
+      lte.status|=LTE_INIT_MASK;
+    //check_card
+    if(CheckCard())
+      car.card=0;
+    else
+      car.card=1;
+    
     if(lte.status&LTE_INIT_MASK)
     {
        SocketClose();
@@ -388,12 +374,30 @@ void LteTask()
       else
         lte.status|=LTE_TOKEN_MASK;
     }
+    //no 4g server
+    if(car.plan==0)
+    {
+      HAL_RTC_DeInit(&hrtc);
+      lte.status=0;
+      osThreadSuspend(NULL);
+    }
+    else
+    {
+      HAL_RTC_Init(&hrtc);
+    }
+    
     if(lte.status&LTE_TOKEN_MASK)
     {
-      if(LoginHead)
+      
+      if(car.token)
         lte.status|=LTE_SOCKET_MASK;
+      
       else
+      {
+        SetEvent(UPLOAD_EVENT_TOKEN,1);
+        osDelay(5000);
         lte.status=0;
+      }
     }
     if(lte.status&LTE_SOCKET_MASK)
     {
@@ -460,6 +464,7 @@ void LteTask()
           GlobalEvent|=UPLOAD_EVENT_LTE;
           osMutexRelease(EventLockHandle);
           PowerS2l(1);
+          SCMWakeup();
         }
         if(LteStatus & LTE_HEART)
         {

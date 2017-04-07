@@ -67,7 +67,7 @@ typedef struct
 }FrameTypeDef;
 
 uint8_t CheckFrame();
-
+uint8_t SCMWakeup();
 
 
 #endif

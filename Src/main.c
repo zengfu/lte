@@ -160,7 +160,7 @@ int main(void)
 
   /* Create the thread(s) */
   /* definition and creation of defaultTask */
-  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
+  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 64);
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* definition and creation of eventhandle */
@@ -168,7 +168,7 @@ int main(void)
   eventhandleHandle = osThreadCreate(osThread(eventhandle), NULL);
 
   /* definition and creation of lte */
-  osThreadDef(lte, Lte_task, osPriorityHigh, 0, 310);
+  osThreadDef(lte, Lte_task, osPriorityHigh, 0, 256);
   lteHandle = osThreadCreate(osThread(lte), NULL);
 
   /* definition and creation of s2lhandle */

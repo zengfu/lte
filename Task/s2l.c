@@ -3,9 +3,15 @@
 #include "stm32l0xx_hal.h"
 #include "fhex.h"
 #include "bsp.h"
+#include "string.h"
+#include "event.h"
 
 extern osMessageQId UartQHandle;
 extern UART_HandleTypeDef huart1;
+
+
+
+CarTypeDef car;
 
 /** CRC table for the CRC-16. The poly is 0x8005 (x^16 + x^15 + x^2 + 1) */
 uint16_t const crc16_table[256] = {
@@ -85,17 +91,19 @@ static void CmdTimeout()
 void S2lTask()
 {
   osEvent evt;
-  
   cmd.state=IDLE;
   
   uint16_t length,clen,crcseed;
   uint16_t tmpl; 
   HAL_UART_Receive_IT(&huart1,&rx,1);
 //  huart1.RxState=HAL_UART_STATE_BUSY_RX;
-//  __HAL_UART_ENABLE_IT(&huart1, UART_IT_RXNE);
+  //__HAL_UART_ENABLE_IT(&huart1, UART_IT_RXNE);
   while(1)
   {
     evt=osMessageGet(UartQHandle,osWaitForever);
+    
+    
+    
     uint8_t tmp;
     tmp=(uint8_t)evt.value.v;
     switch(cmd.state)
@@ -214,7 +222,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
   if(huart->Instance ==USART1)
   {
-    HAL_UART_Receive_IT(&huart1,&rx,1);
+    //
     osMessagePut (UartQHandle,(uint32_t)rx,0);//no block in the inter
   }
 }
@@ -228,6 +236,8 @@ void USART1_IRQHandler(void)
 //    tmp=READ_REG(huart1.Instance->RDR);
 //    osMessagePut (UartQHandle,(uint32_t)tmp,0);//no block in the inter
 //  }
-  
+  //vPortEnterCritical();
   HAL_UART_IRQHandler(&huart1);
+  //vPortExitCritical();
+  HAL_UART_Receive_IT(&huart1,&rx,1);
 }

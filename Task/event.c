@@ -82,6 +82,13 @@ void MicroWaveEventHandle(EventTypeDef *event)
     //printf("wm:%d\r\n",(RealeaseTime-PressTime));
   }
 }
+void SetEvent(uint8_t event,uint8_t on_off)
+{
+    osMutexWait(EventLockHandle,osWaitForever);
+    GlobalEvent|=event;
+    osMutexRelease(EventLockHandle);
+    PowerS2l(on_off);
+}
 void PirEventHandle(EventTypeDef *event)
 {
   LedSet(1,1);
@@ -106,6 +113,7 @@ void LteEventHandle(EventTypeDef *event)
       GlobalEvent|=UPLOAD_EVENT_LTE;
       osMutexRelease(EventLockHandle);
       PowerS2l(1);
+      SCMWakeup();
       //wake up thing
       //LedSet(2,1);
       
@@ -114,7 +122,7 @@ void LteEventHandle(EventTypeDef *event)
 #else
       printf("wakeup\r\n");
 #endif
-      osDelay(100);
+      //osDelay(100);
       //LedSet(2,0);
       //todo:
     }
@@ -133,7 +141,11 @@ void AccelEventHandle(EventTypeDef *event)
     GlobalEvent|=UPLOAD_EVENT_ACCEL;
     osMutexRelease(EventLockHandle);
     PowerS2l(1);
-
+#ifdef S2L_DEBUG
+    S2L_LOG("accel\r\n");
+#else
+    printf("accel\r\n");
+#endif
   }
   else
   {

@@ -19,8 +19,6 @@ extern LteTypeDef lte;
 
 static uint8_t* TxP;
 
-uint8_t* LoginHead=NULL;
-
 static void CmdSend(uint8_t* data,uint8_t length);
 static void DumpFrame(uint8_t* data,uint16_t id,uint8_t length);
 
@@ -34,17 +32,21 @@ void ReadAccel(uint8_t* data);
 void SetReset(uint8_t* data);
 void SetLogin(uint8_t* data);
 void ReadEvent(uint8_t* data);
-void PowerDown(uint8_t* data);
 void LteStatus(uint8_t* pdata);
+void GetCar(uint8_t* data);
+void SetCar(uint8_t* data);
 
 #define GetVersionId 0X0000
 #define SetAccelId   0x0001
 #define GetAccelId   0x0002
 #define ReadAccelId  0x0003
 #define SetResetId   0x0004
-#define PowerDownId  0x0005
+#define GetCarId     0x0005
+#define SetCarId     0x0006
+
 #define SetLoginId   0x0010
 #define LteStatusId  0x0011
+
 #define ReadEventId  0x0020
 #define LogInfoId    0x0030
 
@@ -58,10 +60,11 @@ const FuncTypeDef S2lFunc[]={
   {GetAccelId,GetAccel},
   {ReadAccelId,ReadAccel},
   {SetResetId,SetReset},
+  {GetCarId,GetCar},
   {SetLoginId,SetLogin},
   {ReadEventId,ReadEvent},
-  {PowerDownId,PowerDown},
   {LteStatusId,LteStatus},
+  {SetCarId,SetCar},
 };
 __root const uint8_t version@flash_begin=1;
 
@@ -104,6 +107,19 @@ void LteStatus(uint8_t* pdata)
    DumpFrame(&buf,LteStatusId,1);
    
 }
+extern osThreadId lteHandle;
+void SetCar(uint8_t* data)
+{
+  car=*(CarTypeDef*)(data+8);
+  if(car.plan)
+    osThreadResume(lteHandle);
+  uint8_t err=0;
+  DumpFrame(&err,InfoFrame,1);
+}
+void GetCar(uint8_t* data)
+{
+  DumpFrame((uint8_t*)&car,GetCarId,1);
+}
 void GetAccel(uint8_t* data)
 {
   uint8_t buf[4];
@@ -134,12 +150,13 @@ void SetReset(uint8_t* data)
 
 
 
-
+uint8_t* LoginHead=NULL;
 void SetLogin(uint8_t* data)
 {
 //  uint16_t length;
 //  length=data[2]<<8|data[3];
 //  DumpFrame(data+8,SetLoginId,length-4);
+  
   uint8_t err=0;
   uint16_t length;
   length=data[2]<<8|data[3];
@@ -148,14 +165,13 @@ void SetLogin(uint8_t* data)
     vPortFree(LoginHead);
   }
   //
-  vPortEnterCritical();
   LoginHead=pvPortMalloc(length-2);
   LoginHead[0]=data[2];
   LoginHead[1]=data[3];
   memcpy(LoginHead+2,data+8,length-4);
-  vPortExitCritical();
-  
+  car.token=1;
   DumpFrame((uint8_t*)&err,InfoFrame,1);
+  
   //LoginHead
   
 }
@@ -171,12 +187,7 @@ void ReadEvent(uint8_t* data)
   GlobalEvent=0x8000;
   osMutexRelease(EventLockHandle);
 }
-void PowerDown(uint8_t* data)
-{
-  LedSet(0,1);
-  uint8_t err=0;
-  DumpFrame((uint8_t*)&err,InfoFrame,1);
-}
+
 
 
 void SendAck()
@@ -205,6 +216,8 @@ static void DumpFrame(uint8_t* data,uint16_t id,uint8_t length)
   //no data
   //get the lock
   length+=11;
+  if(TxP)
+    vPortFree(TxP);
   osSemaphoreWait(Uart1LockHandle,osWaitForever);
   SendAck();
   TxP=pvPortMalloc(length);
@@ -243,6 +256,6 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
   if(huart->Instance ==USART1)
   {
     osSemaphoreRelease(Uart1LockHandle);
-    vPortFree(TxP);
+    
   }
 }

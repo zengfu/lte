@@ -8,6 +8,7 @@
 #define UPLOAD_EVENT_ACCEL 0X0001
 #define UPLOAD_EVENT_MW    0X0002
 #define UPLOAD_EVENT_LTE   0X0004
+#define UPLOAD_EVENT_TOKEN 0x0008
 
 
 typedef enum
@@ -29,5 +30,5 @@ typedef struct
 }EventTypeDef;
 
 void EventTask();
-
+void SetEvent(uint8_t event,uint8_t on_off);
 #endif
