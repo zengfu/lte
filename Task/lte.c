@@ -366,14 +366,7 @@ void LteTask()
     else
       car.card=1;
     
-    if(lte.status&LTE_INIT_MASK)
-    {
-       SocketClose();
-      if(SocketInit())
-        lte.status=0;
-      else
-        lte.status|=LTE_TOKEN_MASK;
-    }
+    
     //no 4g server
     if(car.plan==0)
     {
@@ -385,12 +378,11 @@ void LteTask()
     {
       HAL_RTC_Init(&hrtc);
     }
-    
-    if(lte.status&LTE_TOKEN_MASK)
+    if(lte.status&LTE_INIT_MASK)
     {
       
       if(car.token)
-        lte.status|=LTE_SOCKET_MASK;
+        lte.status|=LTE_TOKEN_MASK;
       
       else
       {
@@ -399,6 +391,18 @@ void LteTask()
         lte.status=0;
       }
     }
+    
+    
+    if(lte.status&LTE_TOKEN_MASK)
+    {
+       SocketClose();
+      if(SocketInit())
+        lte.status=0;
+      else
+        lte.status|=LTE_SOCKET_MASK;
+    }
+    
+    
     if(lte.status&LTE_SOCKET_MASK)
     {
       if(SocketOpen())

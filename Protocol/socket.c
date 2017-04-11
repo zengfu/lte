@@ -288,7 +288,10 @@ uint8_t SocketOpen()
 #endif
   }
   else
+  {
+    S2L_LOG(rx);
     return 1;
+  }
   return 0;
 }
 uint8_t SocketClose()

@@ -216,8 +216,6 @@ static void DumpFrame(uint8_t* data,uint16_t id,uint8_t length)
   //no data
   //get the lock
   length+=11;
-  if(TxP)
-    vPortFree(TxP);
   osSemaphoreWait(Uart1LockHandle,osWaitForever);
   SendAck();
   TxP=pvPortMalloc(length);
@@ -256,6 +254,6 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
   if(huart->Instance ==USART1)
   {
     osSemaphoreRelease(Uart1LockHandle);
-    
+    vPortFree(TxP);
   }
 }
