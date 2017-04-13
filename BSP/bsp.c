@@ -7,8 +7,13 @@ static void LteInit();
 
 void BspInit()
 {
+  //close the all isr 
+  
+  //
+  //__disable_irq();
+  HAL_NVIC_DisableIRQ(EXTI0_1_IRQn);
   memset(&car,0,sizeof(car));
- 
+  Lis3dxInit();
   LteInit();
   //TimeStart();
   //on
@@ -18,6 +23,7 @@ void BspInit()
   car.gps=1;
   car.mw=1;
   car.plan=1;
+  HAL_NVIC_EnableIRQ(EXTI0_1_IRQn);
 }
 
 static void (*TimeCallback)();

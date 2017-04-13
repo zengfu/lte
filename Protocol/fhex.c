@@ -10,14 +10,14 @@
 
 extern DMA_HandleTypeDef hdma_usart1_tx;
 extern UART_HandleTypeDef huart1;
-extern osSemaphoreId Uart1LockHandle;
+extern osMutexId Uart1lockHandle;
 extern osMutexId EventLockHandle;
 extern Lis3dxTypeDef Lis3dx;
 extern LteTypeDef lte;
 
 
 
-static uint8_t* TxP;
+
 
 static void CmdSend(uint8_t* data,uint8_t length);
 static void DumpFrame(uint8_t* data,uint16_t id,uint8_t length);
@@ -216,9 +216,11 @@ static void DumpFrame(uint8_t* data,uint16_t id,uint8_t length)
   //no data
   //get the lock
   length+=11;
-  osSemaphoreWait(Uart1LockHandle,osWaitForever);
+  uint8_t* TxP;
   SendAck();
   TxP=pvPortMalloc(length);
+  if(TxP==NULL)
+    return;
   uint16_t rl=length-7;
   TxP[0]=0xaa;
   TxP[1]=0x55;
@@ -241,19 +243,21 @@ static void DumpFrame(uint8_t* data,uint16_t id,uint8_t length)
   TxP[length-2]=crcseed&0xff;
   TxP[length-1]=0x00;
   CmdSend(TxP,length);
+  vPortFree(TxP);
 }
 static void CmdSend(uint8_t* data,uint8_t length)
 {
-  
-  HAL_UART_Transmit_DMA(&huart1,data,length);
+  osMutexWait(Uart1lockHandle,osWaitForever);
+  HAL_UART_Transmit(&huart1,data,length,200);
+  osMutexRelease(Uart1lockHandle);
 }
 
 
-void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
-{
-  if(huart->Instance ==USART1)
-  {
-    osSemaphoreRelease(Uart1LockHandle);
-    vPortFree(TxP);
-  }
-}
+//void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+//{
+//  if(huart->Instance ==USART1)
+//  {
+//    osSemaphoreRelease(Uart1LockHandle);
+//    vPortFree(TxP);
+//  }
+//}

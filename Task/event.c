@@ -24,7 +24,6 @@ void EventTask()
 {
   EventTypeDef event;
   osDelay(1000);
-  Lis3dxInit();
   PirLevelSet(1);
   while(1)
   {

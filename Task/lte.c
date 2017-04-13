@@ -112,10 +112,14 @@ static uint8_t SCMLogin(uint8_t* device_id,uint8_t* user_id,uint8_t* token)
   FrameTypeDef frame;
   
   root=cJSON_CreateObject();
+  if(root==NULL)
+    return 1;
   cJSON_AddItemToObject(root, "device_id", cJSON_CreateString(device_id));
   cJSON_AddItemToObject(root, "user_id", cJSON_CreateString(user_id));
   cJSON_AddItemToObject(root, "token", cJSON_CreateString(token));
   char* out=cJSON_PrintUnformatted(root);
+  if(out==NULL)
+    return 1;
   cJSON_Delete(root);
   //char* encode;
 #ifdef S2L_DEBUG
@@ -126,6 +130,8 @@ static uint8_t SCMLogin(uint8_t* device_id,uint8_t* user_id,uint8_t* token)
   //base 64 encode
   frame.data=b64_encode(out);
   vPortFree(out);
+  if(frame.data==NULL)
+    return 1;
   //
   frame.cmd=SCM360_LOGIN_REQ;
   frame.size=4+strlen(frame.data);
@@ -279,6 +285,8 @@ uint8_t LoginAck(FrameTypeDef* frame)
 #endif
   root=cJSON_Parse(json);
   vPortFree(json);
+  if(root=NULL)
+    return 1;
   res=cJSON_GetObjectItem(root,"res")->valueint;
   if(res==0)
   {
@@ -287,7 +295,9 @@ uint8_t LoginAck(FrameTypeDef* frame)
   }
   else
   {
-    uint8_t* err=cJSON_GetObjectItem(root,"err_msg")->string;
+    //
+    car.token=0;
+    char* err=cJSON_GetObjectItem(root,"err_msg")->string;
 #ifdef S2L_DEBUG
     S2L_LOG(err);
 #else

@@ -328,7 +328,7 @@
           <state>$PROJ_DIR$/../Task</state>
           <state>$PROJ_DIR$/../Tools</state>
           <state>$PROJ_DIR$/../Protocol</state>
-        <state /><state /><state /><state /><state /><state /><state /><state /></option>
+        <state /><state /><state /><state /><state /><state /><state /><state /><state /><state /><state /><state /><state /><state /><state /><state /></option>
         <option>
           <name>CCStdIncCheck</name>
           <state>0</state>

@@ -62,7 +62,6 @@
 UART_HandleTypeDef hlpuart1;
 UART_HandleTypeDef huart1;
 DMA_HandleTypeDef hdma_lpuart1_rx;
-DMA_HandleTypeDef hdma_usart1_tx;
 
 RTC_HandleTypeDef hrtc;
 
@@ -77,7 +76,7 @@ osThreadId s2lhandleHandle;
 osMessageQId EventQHandle;
 osMessageQId UartQHandle;
 osMutexId EventLockHandle;
-osSemaphoreId Uart1LockHandle;
+osMutexId Uart1lockHandle;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
@@ -141,14 +140,13 @@ int main(void)
   osMutexDef(EventLock);
   EventLockHandle = osMutexCreate(osMutex(EventLock));
 
+  /* definition and creation of Uart1lock */
+  osMutexDef(Uart1lock);
+  Uart1lockHandle = osMutexCreate(osMutex(Uart1lock));
+
   /* USER CODE BEGIN RTOS_MUTEX */
   /* add mutexes, ... */
   /* USER CODE END RTOS_MUTEX */
-
-  /* Create the semaphores(s) */
-  /* definition and creation of Uart1Lock */
-  osSemaphoreDef(Uart1Lock);
-  Uart1LockHandle = osSemaphoreCreate(osSemaphore(Uart1Lock), 1);
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
