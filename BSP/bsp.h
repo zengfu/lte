@@ -18,4 +18,14 @@ void TimeStart(void (*func)(),uint16_t time);
 void TimeSetTimeout(uint16_t period);
 void LteReset();
 int fputc(int ch, FILE *f);
+void CheckActive();
+void DeActiveDevice();
+void ActiveDevice();
+void MwCtrl(uint8_t on);
+
+
+#define  NVM_ACTIVE DATA_EEPROM_BASE+0
+ 
+
+
 #endif

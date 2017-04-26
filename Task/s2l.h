@@ -9,6 +9,7 @@ typedef struct
   uint8_t gps:1;//LSB
   uint8_t mw:1;
   uint8_t plan:1;
+  uint8_t active:1;
   //read only
   uint8_t engine:1; 
   uint8_t card:1;

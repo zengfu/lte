@@ -4,10 +4,11 @@
 #include "board.h"
 #include "lis3dx.h"
 #include "lte.h"
+#include "s2l.h"
 
 extern osMessageQId EventQHandle;
 extern osThreadId lteHandle;
-
+extern CarTypeDef car;
 
 extern osMutexId EventLockHandle;
 
@@ -27,6 +28,10 @@ void EventTask()
   PirLevelSet(1);
   while(1)
   {
+    while(!car.active)
+      osDelay(5000);
+    
+    
     xQueueReceive(EventQHandle,&event,portMAX_DELAY);
     if(event.evt==EvtPower)
     {
@@ -38,7 +43,7 @@ void EventTask()
     }
     else if(event.evt==EvtMicroWave)
     {
-      //MicroWaveEventHandle(&event);
+      MicroWaveEventHandle(&event);
     }
     else if(event.evt==EvtLte)
     {

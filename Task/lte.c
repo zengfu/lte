@@ -285,11 +285,12 @@ uint8_t LoginAck(FrameTypeDef* frame)
 #endif
   root=cJSON_Parse(json);
   vPortFree(json);
-  if(root=NULL)
+  if(root==NULL)
     return 1;
   res=cJSON_GetObjectItem(root,"res")->valueint;
   if(res==0)
   {
+    
     cJSON_Delete(root);
     return 0;
   }
@@ -303,6 +304,7 @@ uint8_t LoginAck(FrameTypeDef* frame)
 #else
     printf("error:%s\n",err);
 #endif
+    //vPortFree(json);
     cJSON_Delete(root);
     return 1;
   }
@@ -361,7 +363,8 @@ void LteTask()
   {
     //wait the module init    
     //LteReset();
-    
+    while(!car.active)
+      osDelay(5000);
     if(CheckAT())
     {
       //HAL_UART_Init(&hlpuart1);
@@ -456,7 +459,9 @@ void LteTask()
     
     while(lte.status&LTE_LOGIN_MASK)
     {
-      //LedSet(0,1);
+      
+      if(!car.active)
+        break;
       if( SendHeart())
       {
         osDelay(1000);

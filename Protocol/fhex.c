@@ -108,11 +108,41 @@ void LteStatus(uint8_t* pdata)
    
 }
 extern osThreadId lteHandle;
+extern osThreadId eventhandleHandle;
+//extern osThreadId s2lhandleHandle;
+
 void SetCar(uint8_t* data)
 {
+  CarTypeDef tmp;
+  tmp=car;
   car=*(CarTypeDef*)(data+8);
+  //read only 
+  car.engine=tmp.engine;
+  car.card=tmp.card;
+  car.token=tmp.token;
+  //rw
   if(car.plan)
     osThreadResume(lteHandle);
+  
+  if(car.active)
+  {
+    ActiveDevice();
+  }
+  else
+  {
+    DeActiveDevice();
+  }
+    
+  
+  if(car.gps)
+    //todo
+    ;
+  else
+    ;
+  
+  MwCtrl(car.mw);
+  
+  
   uint8_t err=0;
   DumpFrame(&err,InfoFrame,1);
 }
@@ -251,6 +281,7 @@ static void CmdSend(uint8_t* data,uint8_t length)
   HAL_UART_Transmit(&huart1,data,length,200);
   osMutexRelease(Uart1lockHandle);
 }
+
 
 
 //void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)

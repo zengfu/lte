@@ -1,18 +1,22 @@
 #include "bsp.h"
 #include "lis3dx.h"
 #include "s2l.h"
+#include "string.h"
 
 extern TIM_HandleTypeDef htim6;
 static void LteInit();
 
 void BspInit()
 {
+  memset(&car,0,sizeof(car));
+  ActiveDevice();
+  CheckActive();
   //close the all isr 
-  
+  MwCtrl(1);
   //
   //__disable_irq();
   HAL_NVIC_DisableIRQ(EXTI0_1_IRQn);
-  memset(&car,0,sizeof(car));
+  
   Lis3dxInit();
   LteInit();
   //TimeStart();
@@ -49,6 +53,14 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     TimeCallback();
 }
 
+
+void MwCtrl(uint8_t on)
+{
+  if(on)
+    HAL_GPIO_WritePin(MV_EN_PORT,MV_EN,GPIO_PIN_RESET);
+  else
+    HAL_GPIO_WritePin(MV_EN_PORT,MV_EN,GPIO_PIN_SET);
+}
 void LedTog(uint8_t num)
 {
   switch(num)
@@ -164,6 +176,37 @@ void PowerS2l(uint8_t in)
 void LteOpen()
 {
   HAL_GPIO_WritePin(LTE_CLOSE_PORT,LTE_CLOSE,GPIO_PIN_RESET);
+}
+
+void ActiveDevice()
+{
+  if(!car.active)
+  {
+    HAL_FLASHEx_DATAEEPROM_Unlock();
+    car.active=1;
+    HAL_FLASHEx_DATAEEPROM_Program(FLASH_TYPEPROGRAMDATA_WORD, NVM_ACTIVE,1);
+    HAL_FLASHEx_DATAEEPROM_Lock();
+  }
+}
+void DeActiveDevice()
+{
+  if(car.active)
+  {
+    HAL_FLASHEx_DATAEEPROM_Unlock();
+    car.active=0;
+    HAL_FLASHEx_DATAEEPROM_Program(FLASH_TYPEPROGRAMDATA_WORD, NVM_ACTIVE,0);
+    HAL_FLASHEx_DATAEEPROM_Lock();
+    HAL_NVIC_SystemReset();
+  }
+}
+void CheckActive()
+{
+  uint32_t data;
+  data=*(__IO uint32_t *)NVM_ACTIVE;
+  if(data)
+    car.active=1;
+  else
+    car.active=0;
 }
 extern UART_HandleTypeDef huart1;
 int fputc(int ch, FILE *f)
